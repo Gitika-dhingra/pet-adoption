@@ -1,9 +1,12 @@
 import {
-  consumeStream,
-  convertToModelMessages,
   streamText,
-  UIMessage,
 } from 'ai'
+import { createOpenAI } from '@ai-sdk/openai'
+
+const gemini = createOpenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+  baseURL: process.env.GEMINI_BASE_URL ?? 'https://gemini.googleapis.com/v1',
+})
 
 export const maxDuration = 30
 
@@ -28,17 +31,22 @@ Guidelines:
 You can also help users understand more about specific pets available for adoption on PawFinder.`
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json()
+  try {
+    const { text }: { text: string } = await req.json()
 
-  const result = streamText({
-    model: 'openai/gpt-5-mini',
-    system: SYSTEM_PROMPT,
-    messages: await convertToModelMessages(messages),
-    abortSignal: req.signal,
-  })
+    const messages = [{ role: 'user' as const, content: text }]
 
-  return result.toUIMessageStreamResponse({
-    originalMessages: messages,
-    consumeSseStream: consumeStream,
-  })
+    const result = streamText({
+      model: gemini('gemini-1.5-pro'),
+      system: SYSTEM_PROMPT,
+      messages: messages,
+      abortSignal: req.signal,
+    })
+
+    return result.toTextStreamResponse()
+  } catch (error) {
+    console.error('Chat API error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    return new Response(JSON.stringify({ error: errorMessage }), { status: 500 })
+  }
 }
