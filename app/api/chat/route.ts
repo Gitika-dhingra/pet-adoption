@@ -1,9 +1,7 @@
-import {
-  streamText,
-} from 'ai'
+import { streamText, convertToModelMessages } from 'ai'
 import { groq } from '@ai-sdk/groq'
 
-const groqModel = groq('llama3-8b-8192')
+const groqModel = groq('llama-3.3-70b-versatile')
 
 export const maxDuration = 30
 
@@ -29,18 +27,16 @@ You can also help users understand more about specific pets available for adopti
 
 export async function POST(req: Request) {
   try {
-    const { text }: { text: string } = await req.json()
-
-    const messages = [{ role: 'user' as const, content: text }]
+    const { messages } = await req.json()
 
     const result = streamText({
       model: groqModel,
       system: SYSTEM_PROMPT,
-      messages: messages,
+      messages: await convertToModelMessages(messages),
       abortSignal: req.signal,
     })
 
-    return result.toTextStreamResponse()
+    return result.toUIMessageStreamResponse()
   } catch (error) {
     console.error('Chat API error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
