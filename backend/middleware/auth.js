@@ -23,6 +23,7 @@ async function verifyToken(req, res, next) {
       id: user._id.toString(),
       email: user.email,
       fullName: user.fullName,
+      role: user.role,
       createdAt: user.createdAt,
     }
 
@@ -32,4 +33,18 @@ async function verifyToken(req, res, next) {
   }
 }
 
-module.exports = { verifyToken }
+function requireRole(roles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' })
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+
+    next()
+  }
+}
+
+module.exports = { verifyToken, requireRole }

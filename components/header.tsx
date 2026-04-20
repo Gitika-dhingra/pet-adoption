@@ -29,7 +29,7 @@ export function Header() {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  const [user, setUser] = useState<{ email?: string } | null>(null)
+  const [user, setUser] = useState<{ email?: string; role?: string } | null>(null)
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -111,6 +111,7 @@ export function Header() {
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5">
                   <p className="text-sm font-medium">{user.email}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
@@ -119,6 +120,22 @@ export function Header() {
                     Dashboard
                   </Link>
                 </DropdownMenuItem>
+                {user.role === 'admin' && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Admin Panel
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {user.role === 'vet' && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/vet" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Vet Panel
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />

@@ -1,4 +1,6 @@
 const Pet = require('./models/pet')
+const User = require('./models/user')
+const bcrypt = require('bcrypt')
 
 const samplePets = [
   {
@@ -61,12 +63,89 @@ const samplePets = [
     good_with_dogs: true,
     good_with_cats: false,
   },
+  {
+    id: '4',
+    name: 'Milo',
+    species: 'cat',
+    breed: 'Tabby',
+    age: 6,
+    age_unit: 'months',
+    gender: 'male',
+    size: 'small',
+    image_url: 'https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=800&h=800&fit=crop',
+    location: 'Austin, TX',
+    status: 'available',
+    description: 'Milo is an energetic and curious tabby kitten who is always ready for adventure. He loves to play with toys, chase laser pointers, and explore every corner of the house. Milo would be perfect for an active household that can keep up with his playful personality.',
+    is_vaccinated: true,
+    is_neutered: false,
+    is_housetrained: true,
+    good_with_kids: true,
+    good_with_dogs: true,
+    good_with_cats: true,
+  },
+  {
+    id: '5',
+    name: 'Bella',
+    species: 'dog',
+    breed: 'Labrador Mix',
+    age: 4,
+    age_unit: 'years',
+    gender: 'female',
+    size: 'medium',
+    image_url: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop',
+    location: 'Denver, CO',
+    status: 'available',
+    description: 'Bella is a sweet and gentle Labrador mix who loves nothing more than being by your side. She enjoys hiking, swimming, and playing in the backyard. Bella is patient and wonderful with children of all ages.',
+    is_vaccinated: true,
+    is_neutered: true,
+    is_housetrained: true,
+    good_with_kids: true,
+    good_with_dogs: true,
+    good_with_cats: false,
+  },
 ]
 
-module.exports = async function seedPets() {
-  const count = await Pet.countDocuments()
-  if (count === 0) {
+const sampleUsers = [
+  {
+    email: 'admin@pawfinder.com',
+    password: 'admin123',
+    fullName: 'Admin User',
+    role: 'admin',
+  },
+  {
+    email: 'vet@pawfinder.com',
+    password: 'vet123',
+    fullName: 'Dr. Sarah Johnson',
+    role: 'vet',
+  },
+  {
+    email: 'vet2@pawfinder.com',
+    password: 'vet123',
+    fullName: 'Dr. Michael Chen',
+    role: 'vet',
+  },
+]
+
+module.exports = async function seedDatabase() {
+  // Seed pets
+  const petCount = await Pet.countDocuments()
+  if (petCount === 0) {
     await Pet.create(samplePets)
-    console.log('Seeded pet collection')
+    console.log('Seeded pet collection with', samplePets.length, 'pets')
+  }
+
+  // Seed users
+  const userCount = await User.countDocuments()
+  if (userCount === 0) {
+    const hashedUsers = await Promise.all(
+      sampleUsers.map(async (user) => ({
+        ...user,
+        passwordHash: await bcrypt.hash(user.password, 10),
+      }))
+    )
+    await User.create(hashedUsers)
+    console.log('Seeded user collection with', sampleUsers.length, 'users')
+    console.log('Admin login: admin@pawfinder.com / admin123')
+    console.log('Vet login: vet@pawfinder.com / vet123')
   }
 }

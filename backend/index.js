@@ -8,7 +8,7 @@ const petsRoutes = require('./routes/pets')
 const applicationsRoutes = require('./routes/applications')
 const reportsRoutes = require('./routes/reports')
 const dashboardRoutes = require('./routes/dashboard')
-const seedPets = require('./seed')
+const seedDatabase = require('./seed')
 
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
 
@@ -28,7 +28,7 @@ app.use(express.json())
 mongoose.connect(MONGODB_URI)
   .then(async () => {
     console.log('Connected to MongoDB')
-    await seedPets()
+    await seedDatabase()
   })
   .catch((error) => {
     console.error('MongoDB connection failed:', error)

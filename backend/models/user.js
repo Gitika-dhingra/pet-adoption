@@ -5,6 +5,8 @@ const UserSchema = new Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true },
   fullName: { type: String, trim: true },
+  role: { type: String, enum: ['user', 'vet', 'admin'], default: 'user' },
+  isActive: { type: Boolean, default: true },
 }, { timestamps: true })
 
 module.exports = mongoose.models.User || mongoose.model('User', UserSchema)

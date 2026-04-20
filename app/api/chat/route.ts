@@ -1,12 +1,9 @@
 import {
   streamText,
 } from 'ai'
-import { createOpenAI } from '@ai-sdk/openai'
+import { groq } from '@ai-sdk/groq'
 
-const gemini = createOpenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  baseURL: process.env.GEMINI_BASE_URL ?? 'https://gemini.googleapis.com/v1',
-})
+const groqModel = groq('llama3-8b-8192')
 
 export const maxDuration = 30
 
@@ -37,7 +34,7 @@ export async function POST(req: Request) {
     const messages = [{ role: 'user' as const, content: text }]
 
     const result = streamText({
-      model: gemini('gemini-1.5-pro'),
+      model: groqModel,
       system: SYSTEM_PROMPT,
       messages: messages,
       abortSignal: req.signal,
