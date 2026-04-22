@@ -10,7 +10,7 @@ const SALT_ROUNDS = 10
 
 router.post('/signup', async (req, res) => {
   try {
-    const { email, password, fullName } = req.body
+    const { email, password, fullName, role } = req.body
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required.' })
@@ -26,11 +26,12 @@ router.post('/signup', async (req, res) => {
       email: email.toLowerCase().trim(),
       passwordHash,
       fullName: fullName?.trim() || '',
+      role: role || 'user', // Allow role specification
     })
 
     const token = jwt.sign({ sub: user._id.toString() }, JWT_SECRET, { expiresIn: '30d' })
 
-    res.json({ user: { id: user._id.toString(), email: user.email, fullName: user.fullName }, token })
+    res.json({ user: { id: user._id.toString(), email: user.email, fullName: user.fullName, role: user.role }, token })
   } catch (error) {
     res.status(500).json({ error: 'Unable to create account.' })
   }

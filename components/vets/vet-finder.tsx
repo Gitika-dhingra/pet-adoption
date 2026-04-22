@@ -16,9 +16,10 @@ import {
   Navigation,
   Stethoscope
 } from "lucide-react"
+import { backendRequest } from "@/lib/backend"
 
 interface Vet {
-  id: string
+  _id: string
   name: string
   address: string
   phone: string
@@ -31,81 +32,28 @@ interface Vet {
   image: string
 }
 
-// Demo vet data
-const demoVets: Vet[] = [
-  {
-    id: "1",
-    name: "Happy Paws Veterinary Clinic",
-    address: "123 Main Street, San Francisco, CA 94102",
-    phone: "(415) 555-0123",
-    rating: 4.8,
-    reviewCount: 245,
-    distance: "0.5 mi",
-    isOpen: true,
-    hours: "Open until 8:00 PM",
-    services: ["Emergency Care", "Surgery", "Dental", "Vaccinations"],
-    image: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=400&h=300&fit=crop",
-  },
-  {
-    id: "2",
-    name: "City Pet Hospital",
-    address: "456 Oak Avenue, San Francisco, CA 94103",
-    phone: "(415) 555-0456",
-    rating: 4.6,
-    reviewCount: 189,
-    distance: "1.2 mi",
-    isOpen: true,
-    hours: "Open until 6:00 PM",
-    services: ["General Care", "X-Ray", "Lab Tests", "Grooming"],
-    image: "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=400&h=300&fit=crop",
-  },
-  {
-    id: "3",
-    name: "24/7 Emergency Animal Hospital",
-    address: "789 Market Street, San Francisco, CA 94104",
-    phone: "(415) 555-0789",
-    rating: 4.9,
-    reviewCount: 312,
-    distance: "1.8 mi",
-    isOpen: true,
-    hours: "Open 24 hours",
-    services: ["24/7 Emergency", "ICU", "Surgery", "Specialists"],
-    image: "https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=400&h=300&fit=crop",
-  },
-  {
-    id: "4",
-    name: "Furry Friends Vet Care",
-    address: "321 Valencia Street, San Francisco, CA 94110",
-    phone: "(415) 555-0321",
-    rating: 4.5,
-    reviewCount: 156,
-    distance: "2.3 mi",
-    isOpen: false,
-    hours: "Opens at 9:00 AM",
-    services: ["Wellness Exams", "Vaccinations", "Microchipping", "Nutrition"],
-    image: "https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?w=400&h=300&fit=crop",
-  },
-  {
-    id: "5",
-    name: "Bay Area Animal Clinic",
-    address: "555 Mission Street, San Francisco, CA 94105",
-    phone: "(415) 555-0555",
-    rating: 4.7,
-    reviewCount: 201,
-    distance: "2.8 mi",
-    isOpen: true,
-    hours: "Open until 7:00 PM",
-    services: ["Surgery", "Dentistry", "Dermatology", "Cardiology"],
-    image: "https://images.unsplash.com/photo-1612531386530-97286d97c2d2?w=400&h=300&fit=crop",
-  },
-]
-
 export function VetFinder() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isGettingLocation, setIsGettingLocation] = useState(false)
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const [vets, setVets] = useState<Vet[]>(demoVets)
-  const [isLoading, setIsLoading] = useState(false)
+  const [vets, setVets] = useState<Vet[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchVets = async () => {
+      try {
+        const data = await backendRequest("/api/vets")
+        setVets(data.vets || [])
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unable to load vets")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchVets()
+  }, [])
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
@@ -133,15 +81,15 @@ export function VetFinder() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Simulate search
+    // For now, filter locally. In production, you'd search on backend
     setTimeout(() => {
-      const filtered = demoVets.filter(
+      const filtered = vets.filter(
         (vet) =>
           vet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           vet.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
           vet.services.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()))
       )
-      setVets(filtered.length > 0 ? filtered : demoVets)
+      setVets(filtered.length > 0 ? filtered : vets)
       setIsLoading(false)
     }, 500)
   }
@@ -211,7 +159,7 @@ export function VetFinder() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
           {vets.map((vet) => (
-            <Card key={vet.id} className="overflow-hidden border-border/50 transition-all hover:shadow-lg">
+            <Card key={vet._id} className="overflow-hidden border-border/50 transition-all hover:shadow-lg">
               <div className="flex flex-col sm:flex-row">
                 <div className="aspect-video w-full sm:aspect-square sm:w-48">
                   <img

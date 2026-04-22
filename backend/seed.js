@@ -1,5 +1,6 @@
 const Pet = require('./models/pet')
 const User = require('./models/user')
+const Vet = require('./models/vet')
 const bcrypt = require('bcrypt')
 
 const samplePets = [
@@ -105,6 +106,69 @@ const samplePets = [
   },
 ]
 
+const sampleVets = [
+  {
+    name: "Happy Paws Veterinary Clinic",
+    address: "123 Main Street, San Francisco, CA 94102",
+    phone: "(415) 555-0123",
+    rating: 4.8,
+    reviewCount: 245,
+    distance: "0.5 mi",
+    isOpen: true,
+    hours: "Open until 8:00 PM",
+    services: ["Emergency Care", "Surgery", "Dental", "Vaccinations"],
+    image: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=400&h=300&fit=crop",
+  },
+  {
+    name: "City Pet Hospital",
+    address: "456 Oak Avenue, San Francisco, CA 94103",
+    phone: "(415) 555-0456",
+    rating: 4.6,
+    reviewCount: 189,
+    distance: "1.2 mi",
+    isOpen: true,
+    hours: "Open until 6:00 PM",
+    services: ["General Care", "X-Ray", "Lab Tests", "Grooming"],
+    image: "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=400&h=300&fit=crop",
+  },
+  {
+    name: "24/7 Emergency Animal Hospital",
+    address: "789 Market Street, San Francisco, CA 94104",
+    phone: "(415) 555-0789",
+    rating: 4.9,
+    reviewCount: 312,
+    distance: "1.8 mi",
+    isOpen: true,
+    hours: "Open 24 hours",
+    services: ["24/7 Emergency", "ICU", "Surgery", "Specialists"],
+    image: "https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=400&h=300&fit=crop",
+  },
+  {
+    name: "Furry Friends Vet Care",
+    address: "321 Valencia Street, San Francisco, CA 94110",
+    phone: "(415) 555-0321",
+    rating: 4.5,
+    reviewCount: 156,
+    distance: "2.3 mi",
+    isOpen: false,
+    hours: "Opens at 9:00 AM",
+    services: ["Wellness Exams", "Vaccinations", "Microchipping", "Nutrition"],
+    image: "https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?w=400&h=300&fit=crop",
+  },
+  {
+    name: "Bay Area Animal Clinic",
+    address: "555 Mission Street, San Francisco, CA 94105",
+    phone: "(415) 555-0555",
+    rating: 4.7,
+    reviewCount: 201,
+    distance: "2.8 mi",
+    isOpen: true,
+    hours: "Open until 7:00 PM",
+    services: ["Surgery", "Dentistry", "Dermatology", "Cardiology"],
+    image: "https://images.unsplash.com/photo-1612531386530-97286d97c2d2?w=400&h=300&fit=crop",
+  },
+]
+
 const sampleUsers = [
   {
     email: 'admin@pawfinder.com',
@@ -132,6 +196,13 @@ module.exports = async function seedDatabase() {
   if (petCount === 0) {
     await Pet.create(samplePets)
     console.log('Seeded pet collection with', samplePets.length, 'pets')
+  }
+
+  // Seed vets
+  const vetCount = await Vet.countDocuments()
+  if (vetCount === 0) {
+    await Vet.create(sampleVets)
+    console.log('Seeded vet collection with', sampleVets.length, 'vets')
   }
 
   // Seed users

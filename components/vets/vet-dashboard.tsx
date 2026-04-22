@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -9,6 +10,7 @@ import { PetForm } from "@/components/admin/pet-form"
 import { Plus, Edit, Stethoscope, Heart } from "lucide-react"
 import { backendUrl } from "@/lib/backend"
 import { Spinner } from "@/components/ui/spinner"
+import { backendRequest } from "@/lib/backend"
 
 interface Pet {
   id: string
@@ -33,14 +35,29 @@ interface Pet {
 }
 
 export function VetDashboard() {
+  const router = useRouter()
   const [pets, setPets] = useState<Pet[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   useEffect(() => {
-    loadPets()
-  }, [])
+    const checkAuth = async () => {
+      try {
+        const user = await backendRequest("/api/auth/me")
+        if (user.role !== 'vet' && user.role !== 'admin') {
+          router.push("/auth/vet-login")
+          return
+        }
+      } catch (error) {
+        router.push("/auth/vet-login")
+        return
+      }
+      loadPets()
+    }
+
+    checkAuth()
+  }, [router])
 
   const loadPets = async () => {
     try {

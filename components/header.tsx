@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, PawPrint, Moon, Sun, User, LogOut } from "lucide-react"
+import { Menu, PawPrint, Moon, Sun, User, LogOut, Stethoscope, Shield } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useState, useEffect } from "react"
 import { backendRequest, clearAuthToken } from "@/lib/backend"
@@ -145,9 +145,33 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <div className="hidden items-center gap-2 md:flex">
-              <Button variant="ghost" asChild>
-                <Link href="/auth/login">Sign In</Link>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost">
+                    Sign In
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/auth/login" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      User Login
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/auth/vet-login" className="cursor-pointer">
+                      <Stethoscope className="mr-2 h-4 w-4" />
+                      Vet Login
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/auth/admin-login" className="cursor-pointer">
+                      <Shield className="mr-2 h-4 w-4" />
+                      Admin Login
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button asChild>
                 <Link href="/auth/sign-up">Get Started</Link>
               </Button>
@@ -181,13 +205,32 @@ export function Header() {
                 {!user && (
                   <>
                     <hr className="my-2 border-border" />
-                    <Link
-                      href="/auth/login"
-                      onClick={() => setOpen(false)}
-                      className="rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary"
-                    >
-                      Sign In
-                    </Link>
+                    <div className="space-y-2">
+                      <Link
+                        href="/auth/login"
+                        onClick={() => setOpen(false)}
+                        className="block rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary"
+                      >
+                        <User className="mr-2 inline h-4 w-4" />
+                        User Login
+                      </Link>
+                      <Link
+                        href="/auth/vet-login"
+                        onClick={() => setOpen(false)}
+                        className="block rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary"
+                      >
+                        <Stethoscope className="mr-2 inline h-4 w-4" />
+                        Vet Login
+                      </Link>
+                      <Link
+                        href="/auth/admin-login"
+                        onClick={() => setOpen(false)}
+                        className="block rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary"
+                      >
+                        <Shield className="mr-2 inline h-4 w-4" />
+                        Admin Login
+                      </Link>
+                    </div>
                     <Button asChild className="mt-2">
                       <Link href="/auth/sign-up" onClick={() => setOpen(false)}>
                         Get Started

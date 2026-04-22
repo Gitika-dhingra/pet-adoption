@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,42 +9,54 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { PetForm } from "@/components/admin/pet-form"
 import { UserManagement } from "@/components/admin/user-management"
-import { Plus, Edit, Trash2, Users, PawPrint } from "lucide-react"
+import { Plus, Edit, Trash2, Users, PawPrint, Stethoscope } from "lucide-react"
 import { backendUrl } from "@/lib/backend"
 import { Spinner } from "@/components/ui/spinner"
+import { backendRequest } from "@/lib/backend"
 
-interface Pet {
-  id: string
+interface Vet {
+  _id: string
   name: string
-  species: string
-  breed: string
-  age: number
-  age_unit: string
-  gender: string
-  size: string
-  image_url: string
-  location: string
-  status: string
-  description: string
-  is_vaccinated: boolean
-  is_neutered: boolean
-  is_housetrained: boolean
-  good_with_kids: boolean
-  good_with_dogs: boolean
-  good_with_cats: boolean
-  createdAt: string
+  address: string
+  phone: string
+  rating: number
+  reviewCount: number
+  distance: string
+  isOpen: boolean
+  hours: string
+  services: string[]
+  image: string
 }
 
 export function AdminDashboard() {
+  const router = useRouter()
   const [pets, setPets] = useState<Pet[]>([])
+  const [vets, setVets] = useState<Vet[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
+  const [selectedVet, setSelectedVet] = useState<Vet | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isVetDialogOpen, setIsVetDialogOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("pets")
 
   useEffect(() => {
-    loadPets()
-  }, [])
+    const checkAuth = async () => {
+      try {
+        const user = await backendRequest("/api/auth/me")
+        if (user.role !== 'admin') {
+          router.push("/auth/admin-login")
+          return
+        }
+      } catch (error) {
+        router.push("/auth/admin-login")
+        return
+      }
+      loadPets()
+      loadVets()
+    }
+
+    checkAuth()
+  }, [router])
 
   const loadPets = async () => {
     try {
@@ -59,8 +72,23 @@ export function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error loading pets:', error)
-    } finally {
-      setIsLoading(false)
+    }
+  }
+
+  const loadVets = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${backendUrl}/api/vets`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      const data = await response.json()
+      if (response.ok) {
+        setVets(data.vets)
+      }
+    } catch (error) {
+      console.error('Error loading vets:', error)
     }
   }
 
@@ -84,10 +112,36 @@ export function AdminDashboard() {
     }
   }
 
+  const handleDeleteVet = async (vetId: string) => {
+    if (!confirm('Are you sure you want to delete this vet?')) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${backendUrl}/api/vets/${vetId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        setVets(vets.filter(vet => vet._id !== vetId))
+      }
+    } catch (error) {
+      console.error('Error deleting vet:', error)
+    }
+  }
+
   const handlePetSaved = () => {
     setIsDialogOpen(false)
     setSelectedPet(null)
     loadPets()
+  }
+
+  const handleVetSaved = () => {
+    setIsVetDialogOpen(false)
+    setSelectedVet(null)
+    loadVets()
   }
 
   if (isLoading) {
@@ -105,6 +159,10 @@ export function AdminDashboard() {
           <TabsTrigger value="pets" className="flex items-center gap-2">
             <PawPrint className="h-4 w-4" />
             Pets Management
+          </TabsTrigger>
+          <TabsTrigger value="vets" className="flex items-center gap-2">
+            <Stethoscope className="h-4 w-4" />
+            Vets Management
           </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -178,6 +236,95 @@ export function AdminDashboard() {
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDeletePet(pet.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="vets" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-semibold">Vet Management</h2>
+            <Dialog open={isVetDialogOpen} onOpenChange={setIsVetDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setSelectedVet(null)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Vet
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {selectedVet ? 'Edit Vet' : 'Add New Vet'}
+                  </DialogTitle>
+                </DialogHeader>
+                {/* VetForm component would go here - for now, just placeholder */}
+                <div className="p-4 text-center text-muted-foreground">
+                  Vet form coming soon...
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {vets.map((vet) => (
+              <Card key={vet._id}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-lg">{vet.name}</CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        {vet.phone}
+                      </p>
+                    </div>
+                    <Badge variant={vet.isOpen ? 'default' : 'secondary'}>
+                      {vet.isOpen ? 'Open' : 'Closed'}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-sm">
+                      <strong>Address:</strong> {vet.address}
+                    </p>
+                    <p className="text-sm">
+                      <strong>Rating:</strong> {vet.rating} ({vet.reviewCount} reviews)
+                    </p>
+                    <p className="text-sm">
+                      <strong>Hours:</strong> {vet.hours}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {vet.services.slice(0, 2).map((service) => (
+                        <Badge key={service} variant="outline" className="text-xs">
+                          {service}
+                        </Badge>
+                      ))}
+                      {vet.services.length > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{vet.services.length - 2} more
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedVet(vet)
+                          setIsVetDialogOpen(true)
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteVet(vet._id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
