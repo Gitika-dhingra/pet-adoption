@@ -10,9 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { PetForm } from "@/components/admin/pet-form"
 import { UserManagement } from "@/components/admin/user-management"
 import { Plus, Edit, Trash2, Users, PawPrint, Stethoscope } from "lucide-react"
-import { backendUrl } from "@/lib/backend"
+import { backendUrl, backendRequest, getAuthToken } from "@/lib/backend"
 import { Spinner } from "@/components/ui/spinner"
-import { backendRequest } from "@/lib/backend"
 
 interface Vet {
   _id: string
@@ -60,7 +59,7 @@ export function AdminDashboard() {
 
   const loadPets = async () => {
     try {
-      const token = localStorage.getItem('token')
+      const token = getAuthToken()
       const response = await fetch(`${backendUrl}/api/pets/admin/all`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -72,12 +71,14 @@ export function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error loading pets:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const loadVets = async () => {
     try {
-      const token = localStorage.getItem('token')
+      const token = getAuthToken()
       const response = await fetch(`${backendUrl}/api/vets`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -96,7 +97,7 @@ export function AdminDashboard() {
     if (!confirm('Are you sure you want to delete this pet?')) return
 
     try {
-      const token = localStorage.getItem('token')
+      const token = getAuthToken()
       const response = await fetch(`${backendUrl}/api/pets/${petId}`, {
         method: 'DELETE',
         headers: {
@@ -116,7 +117,7 @@ export function AdminDashboard() {
     if (!confirm('Are you sure you want to delete this vet?')) return
 
     try {
-      const token = localStorage.getItem('token')
+      const token = getAuthToken()
       const response = await fetch(`${backendUrl}/api/vets/${vetId}`, {
         method: 'DELETE',
         headers: {

@@ -2,7 +2,7 @@ const express = require('express')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const User = require('../models/user')
-const { verifyToken } = require('../middleware/auth')
+const { verifyToken, requireRole } = require('../middleware/auth')
 
 const router = express.Router()
 const JWT_SECRET = process.env.JWT_SECRET || 'please-change-this-secret'
@@ -26,7 +26,7 @@ router.post('/signup', async (req, res) => {
       email: email.toLowerCase().trim(),
       passwordHash,
       fullName: fullName?.trim() || '',
-      role: role || 'user', // Allow role specification
+      role: role || 'user',
     })
 
     const token = jwt.sign({ sub: user._id.toString() }, JWT_SECRET, { expiresIn: '30d' })
@@ -56,7 +56,8 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign({ sub: user._id.toString() }, JWT_SECRET, { expiresIn: '30d' })
-    res.json({ user: { id: user._id.toString(), email: user.email, fullName: user.fullName }, token })
+    // Include role so the frontend can do role-based redirects immediately after login
+    res.json({ user: { id: user._id.toString(), email: user.email, fullName: user.fullName, role: user.role }, token })
   } catch (error) {
     res.status(500).json({ error: 'Unable to log in.' })
   }
@@ -64,6 +65,41 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', verifyToken, async (req, res) => {
   res.json({ user: req.user })
+})
+
+// List all users (admin only)
+router.get('/users', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const users = await User.find({}).sort({ createdAt: -1 }).lean()
+    const formatted = users.map((u) => ({
+      id: u._id.toString(),
+      email: u.email,
+      fullName: u.fullName,
+      role: u.role,
+      isActive: true,
+      createdAt: u.createdAt,
+    }))
+    res.json({ users: formatted })
+  } catch (error) {
+    res.status(500).json({ error: 'Unable to load users.' })
+  }
+})
+
+// Update user role (admin only)
+router.put('/users/:id/role', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const { role } = req.body
+    if (!['user', 'vet', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role.' })
+    }
+    const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).lean()
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' })
+    }
+    res.json({ user: { id: user._id.toString(), email: user.email, fullName: user.fullName, role: user.role } })
+  } catch (error) {
+    res.status(500).json({ error: 'Unable to update user role.' })
+  }
 })
 
 module.exports = router

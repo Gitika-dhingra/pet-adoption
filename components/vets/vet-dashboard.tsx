@@ -8,9 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { PetForm } from "@/components/admin/pet-form"
 import { Plus, Edit, Stethoscope, Heart } from "lucide-react"
-import { backendUrl } from "@/lib/backend"
+import { backendUrl, backendRequest, getAuthToken } from "@/lib/backend"
 import { Spinner } from "@/components/ui/spinner"
-import { backendRequest } from "@/lib/backend"
 
 interface Pet {
   id: string
@@ -61,7 +60,7 @@ export function VetDashboard() {
 
   const loadPets = async () => {
     try {
-      const token = localStorage.getItem('token')
+      const token = getAuthToken()
       const response = await fetch(`${backendUrl}/api/pets/admin/all`, {
         headers: {
           'Authorization': `Bearer ${token}`

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Empty } from "@/components/ui/empty"
-import type { User } from "@supabase/supabase-js"
 import { 
   FileText, 
   Heart, 
@@ -15,9 +14,15 @@ import {
   MapPin, 
   Clock,
   PawPrint,
-  ExternalLink
 } from "lucide-react"
 import Link from "next/link"
+
+interface User {
+  id: string
+  email: string
+  fullName?: string
+  role?: string
+}
 
 interface DashboardContentProps {
   user: User

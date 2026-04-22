@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { backendUrl } from "@/lib/backend"
+import { backendRequest } from "@/lib/backend"
 import { Spinner } from "@/components/ui/spinner"
 
 interface User {
@@ -20,6 +19,7 @@ interface User {
 export function UserManagement() {
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadUsers()
@@ -27,11 +27,10 @@ export function UserManagement() {
 
   const loadUsers = async () => {
     try {
-      // This would need a backend endpoint to get all users
-      // For now, we'll show a placeholder
-      setUsers([])
-    } catch (error) {
-      console.error('Error loading users:', error)
+      const data = await backendRequest("/api/auth/users")
+      setUsers(data.users || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load users")
     } finally {
       setIsLoading(false)
     }
@@ -39,11 +38,16 @@ export function UserManagement() {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      const token = localStorage.getItem('token')
-      // This would need a backend endpoint to update user roles
-      console.log('Updating user role:', userId, newRole)
-    } catch (error) {
-      console.error('Error updating user role:', error)
+      await backendRequest(`/api/auth/users/${userId}/role`, {
+        method: "PUT",
+        body: JSON.stringify({ role: newRole }),
+      })
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+      )
+    } catch (err) {
+      console.error("Error updating user role:", err)
+      alert("Failed to update user role. Please try again.")
     }
   }
 
@@ -65,24 +69,26 @@ export function UserManagement() {
           </p>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {users.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No users found. User management features will be available once backend endpoints are implemented.
-              </p>
-            ) : (
-              users.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+          {error ? (
+            <p className="text-center text-destructive py-8">{error}</p>
+          ) : users.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
+              No users found.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {users.map((user) => (
+                <div key={user.id} className="flex items-center justify-between rounded-lg border p-4">
                   <div>
-                    <p className="font-medium">{user.fullName}</p>
+                    <p className="font-medium">{user.fullName || "(no name)"}</p>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                     <p className="text-xs text-muted-foreground">
                       Joined {new Date(user.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                      {user.isActive ? 'Active' : 'Inactive'}
+                    <Badge variant={user.isActive ? "default" : "secondary"}>
+                      {user.isActive ? "Active" : "Inactive"}
                     </Badge>
                     <Select
                       value={user.role}
@@ -99,11 +105,11 @@ export function UserManagement() {
                     </Select>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   )
-}
+}

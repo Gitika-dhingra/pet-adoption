@@ -1,8 +1,15 @@
 import { cva, type VariantProps } from 'class-variance-authority'
+import { LucideIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
-function Empty({ className, ...props }: React.ComponentProps<'div'>) {
+interface EmptyProps extends React.ComponentProps<'div'> {
+  icon?: LucideIcon | React.ComponentType<{ className?: string }>
+  title?: string
+  description?: string
+}
+
+function Empty({ className, icon: Icon, title, description, children, ...props }: EmptyProps) {
   return (
     <div
       data-slot="empty"
@@ -11,7 +18,20 @@ function Empty({ className, ...props }: React.ComponentProps<'div'>) {
         className,
       )}
       {...props}
-    />
+    >
+      {Icon && (
+        <EmptyMedia>
+          <Icon className="h-6 w-6" />
+        </EmptyMedia>
+      )}
+      {(title || description) && (
+        <EmptyHeader>
+          {title && <EmptyTitle>{title}</EmptyTitle>}
+          {description && <EmptyDescription>{description}</EmptyDescription>}
+        </EmptyHeader>
+      )}
+      {children && <EmptyContent>{children}</EmptyContent>}
+    </div>
   )
 }
 
