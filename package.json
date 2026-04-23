@@ -6,7 +6,7 @@
     "dev": "next dev",
     "dev:backend": "node backend/index.js",
     "build": "next build",
-    "start": "next start",
+    "start": "node backend/index.js & next start",
     "lint": "eslint ."
   },
   "dependencies": {
