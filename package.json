@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "dev:backend": "node backend/index.js",
-    "build": "npm install --prefix backend && next build",
+    "build": "next build",
     "start": "node backend/index.js & next start",
+    "postinstall": "npm install --prefix backend",
     "lint": "eslint ."
   },
   "dependencies": {
