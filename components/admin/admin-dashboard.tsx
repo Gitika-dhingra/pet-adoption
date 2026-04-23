@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PetForm } from "@/components/admin/pet-form"
 import { UserManagement } from "@/components/admin/user-management"
-import { Plus, Edit, Trash2, Users, PawPrint, Stethoscope } from "lucide-react"
+import { Plus, Edit, Trash2, Users, PawPrint, Stethoscope, AlertTriangle, MapPin, Phone, Mail, Clock } from "lucide-react"
 import { backendUrl, backendRequest, getAuthToken } from "@/lib/backend"
 import { Spinner } from "@/components/ui/spinner"
 
@@ -31,12 +32,14 @@ export function AdminDashboard() {
   const router = useRouter()
   const [pets, setPets] = useState<Pet[]>([])
   const [vets, setVets] = useState<Vet[]>([])
+  const [reports, setReports] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
   const [selectedVet, setSelectedVet] = useState<Vet | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isVetDialogOpen, setIsVetDialogOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("pets")
+  const [activeTab, setActiveTab] = useState("dashboard")
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -52,6 +55,8 @@ export function AdminDashboard() {
       }
       loadPets()
       loadVets()
+      loadReports()
+      loadUsers()
     }
 
     checkAuth()
@@ -90,6 +95,43 @@ export function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error loading vets:', error)
+    }
+  }
+
+  const loadReports = async () => {
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${backendUrl}/api/reports/admin/all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      const data = await response.json()
+      if (response.ok) {
+        setReports(data.reports)
+      }
+    } catch (error) {
+      console.error('Error loading reports:', error)
+    }
+  }
+
+  const loadUsers = async () => {
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${backendUrl}/api/auth/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      const data = await response.json()
+      if (response.ok) {
+        setUsers(data.users)
+      }
+    } catch (error) {
+      console.error('Error loading users:', error)
+    }
+    finally {
+      setIsLoading(false)
     }
   }
 
@@ -157,6 +199,10 @@ export function AdminDashboard() {
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <PawPrint className="h-4 w-4" />
+            Dashboard
+          </TabsTrigger>
           <TabsTrigger value="pets" className="flex items-center gap-2">
             <PawPrint className="h-4 w-4" />
             Pets Management
@@ -165,11 +211,100 @@ export function AdminDashboard() {
             <Stethoscope className="h-4 w-4" />
             Vets Management
           </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Reports
+          </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             User Management
           </TabsTrigger>
         </TabsList>
+
+        {/* Dashboard Tab */}
+        <TabsContent value="dashboard" className="space-y-6">
+          <h2 className="text-2xl font-semibold">Dashboard Overview</h2>
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card>
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                  <PawPrint className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{pets.length}</p>
+                  <p className="text-sm text-muted-foreground">Total Pets</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
+                  <Stethoscope className="h-6 w-6 text-accent" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{vets.length}</p>
+                  <p className="text-sm text-muted-foreground">Total Vets</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{users.length}</p>
+                  <p className="text-sm text-muted-foreground">Total Users</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-destructive/10">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">{reports.length}</p>
+                  <p className="text-sm text-muted-foreground">Injury Reports</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Reports */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Recent Reports</h3>
+            {reports.length === 0 ? (
+              <Card>
+                <CardContent className="p-6 text-center text-muted-foreground">
+                  No reports yet
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {reports.slice(0, 5).map((report) => (
+                  <Card key={report._id} className="border-border/50">
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="flex-1">
+                        <p className="font-semibold">{report.animalType} - {report.description.substring(0, 50)}...</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          {report.location}
+                        </div>
+                      </div>
+                      <Badge className={report.urgency === 'critical' ? 'bg-destructive' : 'bg-yellow-500'}>
+                        {report.urgency}
+                      </Badge>
+                      <Badge variant={report.status === 'pending' ? 'secondary' : 'outline'} className="ml-2">
+                        {report.status}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
 
         <TabsContent value="pets" className="space-y-6">
           <div className="flex justify-between items-center">
@@ -339,6 +474,95 @@ export function AdminDashboard() {
 
         <TabsContent value="users">
           <UserManagement />
+        </TabsContent>
+
+        {/* Reports Tab */}
+        <TabsContent value="reports" className="space-y-6">
+          <h2 className="text-2xl font-semibold">Injury Reports</h2>
+          
+          {reports.length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center text-muted-foreground">
+                <AlertTriangle className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>No injury reports yet</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {reports.map((report) => (
+                <Card key={report._id} className="border-border/50">
+                  <CardContent className="p-6">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <h3 className="font-semibold mb-2">
+                          {report.animalType.charAt(0).toUpperCase() + report.animalType.slice(1)}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-2">{report.description}</p>
+                        <div className="flex items-center gap-2 text-sm mb-2">
+                          <MapPin className="h-4 w-4" />
+                          <span>{report.location}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone className="h-4 w-4" />
+                          <span>{report.reporterPhone}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-4 w-4" />
+                          <span>{report.reporterEmail}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex gap-2">
+                          <Badge className={report.urgency === 'critical' ? 'bg-destructive' : report.urgency === 'high' ? 'bg-orange-500' : 'bg-yellow-500'}>
+                            {report.urgency}
+                          </Badge>
+                          <Badge variant={report.status === 'resolved' ? 'default' : 'secondary'}>
+                            {report.status}
+                          </Badge>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Update Status</label>
+                          <Select 
+                            value={report.status}
+                            onValueChange={async (newStatus) => {
+                              try {
+                                const token = getAuthToken()
+                                await fetch(`${backendUrl}/api/reports/${report._id}/status`, {
+                                  method: 'PATCH',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                  },
+                                  body: JSON.stringify({ status: newStatus })
+                                })
+                                loadReports()
+                              } catch (error) {
+                                console.error('Error updating report status:', error)
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="in-progress">In Progress</SelectItem>
+                              <SelectItem value="resolved">Resolved</SelectItem>
+                              <SelectItem value="unable-to-help">Unable to Help</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3 inline mr-1" />
+                          {new Date(report.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

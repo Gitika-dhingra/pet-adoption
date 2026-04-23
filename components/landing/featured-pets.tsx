@@ -7,10 +7,11 @@ import { Heart, MapPin, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import useSWR from "swr"
-import { createClient } from "@/lib/supabase/client"
 import { Spinner } from "@/components/ui/spinner"
+import { backendRequest } from "@/lib/backend"
 
 interface Pet {
+  _id: string
   id: string
   name: string
   species: string
@@ -25,104 +26,20 @@ interface Pet {
 }
 
 const fetcher = async (): Promise<Pet[]> => {
-  const supabase = createClient()
-  const { data, error } = await supabase
-    .from("pets")
-    .select("*")
-    .eq("status", "available")
-    .limit(6)
-    .order("created_at", { ascending: false })
-  
-  if (error) throw error
-  return data || []
+  try {
+    const data = await backendRequest('/api/pets')
+    return data.pets || []
+  } catch (error) {
+    console.error('Failed to fetch pets:', error)
+    return []
+  }
 }
 
-// Fallback pets for demo
-const fallbackPets: Pet[] = [
-  {
-    id: "1",
-    name: "Buddy",
-    species: "dog",
-    breed: "Golden Retriever",
-    age: 2,
-    age_unit: "years",
-    gender: "male",
-    size: "large",
-    image_url: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop",
-    location: "San Francisco, CA",
-    status: "available",
-  },
-  {
-    id: "2",
-    name: "Luna",
-    species: "cat",
-    breed: "British Shorthair",
-    age: 1,
-    age_unit: "years",
-    gender: "female",
-    size: "medium",
-    image_url: "https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=400&h=400&fit=crop",
-    location: "Los Angeles, CA",
-    status: "available",
-  },
-  {
-    id: "3",
-    name: "Max",
-    species: "dog",
-    breed: "German Shepherd",
-    age: 3,
-    age_unit: "years",
-    gender: "male",
-    size: "large",
-    image_url: "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=400&h=400&fit=crop",
-    location: "Seattle, WA",
-    status: "available",
-  },
-  {
-    id: "4",
-    name: "Milo",
-    species: "cat",
-    breed: "Tabby",
-    age: 6,
-    age_unit: "months",
-    gender: "male",
-    size: "small",
-    image_url: "https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=400&h=400&fit=crop",
-    location: "Austin, TX",
-    status: "available",
-  },
-  {
-    id: "5",
-    name: "Bella",
-    species: "dog",
-    breed: "Labrador Mix",
-    age: 4,
-    age_unit: "years",
-    gender: "female",
-    size: "medium",
-    image_url: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop",
-    location: "Denver, CO",
-    status: "available",
-  },
-  {
-    id: "6",
-    name: "Oliver",
-    species: "cat",
-    breed: "Maine Coon",
-    age: 2,
-    age_unit: "years",
-    gender: "male",
-    size: "large",
-    image_url: "https://images.unsplash.com/photo-1606214174585-fe31582dc6ee?w=400&h=400&fit=crop",
-    location: "Portland, OR",
-    status: "available",
-  },
-]
 
 export function FeaturedPets() {
   const { data: pets, isLoading } = useSWR("featured-pets", fetcher)
   
-  const displayPets = pets && pets.length > 0 ? pets : fallbackPets
+  const displayPets = pets || []
 
   return (
     <section className="bg-secondary/30 py-16 md:py-24">

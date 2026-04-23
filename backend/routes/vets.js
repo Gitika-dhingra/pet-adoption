@@ -4,6 +4,64 @@ const { verifyToken, requireRole } = require('../middleware/auth')
 
 const router = express.Router()
 
+// Get nearby vets based on latitude/longitude (with radius in km)
+router.get('/nearby/:latitude/:longitude', async (req, res) => {
+  try {
+    const { latitude, longitude } = req.params
+    const radiusKm = req.query.radius || 50 // Default 50km radius
+    const radiusRadians = radiusKm / 6371 // Convert km to radians (Earth radius = 6371 km)
+
+    const lat = parseFloat(latitude)
+    const lng = parseFloat(longitude)
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({ error: 'Invalid latitude or longitude' })
+    }
+
+    // Use MongoDB geospatial query
+    const vets = await Vet.find({
+      location: {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [lng, lat]
+          },
+          $maxDistance: radiusKm * 1000 // Convert km to meters
+        }
+      }
+    }).lean()
+
+    // If geospatial index doesn't exist, fallback to manual distance calculation
+    if (vets.length === 0) {
+      const allVets = await Vet.find({ latitude: { $exists: true }, longitude: { $exists: true } }).lean()
+      
+      const nearbyVets = allVets
+        .map(vet => {
+          const R = 6371 // Earth's radius in km
+          const dLat = (vet.latitude - lat) * Math.PI / 180
+          const dLng = (vet.longitude - lng) * Math.PI / 180
+          const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat * Math.PI / 180) * Math.cos(vet.latitude * Math.PI / 180) *
+            Math.sin(dLng/2) * Math.sin(dLng/2)
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+          const distance = R * c
+          
+          return { ...vet, distance: distance.toFixed(2) }
+        })
+        .filter(vet => vet.distance <= radiusKm)
+        .sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance))
+
+      return res.json({ vets: nearbyVets })
+    }
+
+    res.json({ vets })
+  } catch (error) {
+    console.error('Error finding nearby vets:', error)
+    res.status(500).json({ error: 'Unable to find nearby vets.' })
+  }
+})
+
 // Get all vets
 router.get('/', async (req, res) => {
   try {
