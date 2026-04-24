@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, PawPrint, Moon, Sun, User, LogOut, Stethoscope, Shield } from "lucide-react"
+import { Menu, PawPrint, Moon, Sun, User, LogOut, Shield } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useState, useEffect } from "react"
 import { backendRequest, clearAuthToken } from "@/lib/backend"
@@ -128,14 +128,7 @@ export function Header() {
                     </Link>
                   </DropdownMenuItem>
                 )}
-                {user.role === 'vet' && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/vet" className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      Vet Panel
-                    </Link>
-                  </DropdownMenuItem>
-                )}
+
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
@@ -158,12 +151,7 @@ export function Header() {
                       User Login
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/auth/vet-login" className="cursor-pointer">
-                      <Stethoscope className="mr-2 h-4 w-4" />
-                      Vet Login
-                    </Link>
-                  </DropdownMenuItem>
+
                   <DropdownMenuItem asChild>
                     <Link href="/auth/admin-login" className="cursor-pointer">
                       <Shield className="mr-2 h-4 w-4" />
@@ -214,14 +202,7 @@ export function Header() {
                         <User className="mr-2 inline h-4 w-4" />
                         User Login
                       </Link>
-                      <Link
-                        href="/auth/vet-login"
-                        onClick={() => setOpen(false)}
-                        className="block rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary"
-                      >
-                        <Stethoscope className="mr-2 inline h-4 w-4" />
-                        Vet Login
-                      </Link>
+
                       <Link
                         href="/auth/admin-login"
                         onClick={() => setOpen(false)}

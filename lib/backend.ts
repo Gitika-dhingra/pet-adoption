@@ -26,16 +26,23 @@ export async function backendRequest(path: string, options: RequestInit = {}) {
     headers.Authorization = `Bearer ${token}`
   }
 
-  const response = await fetch(`${backendUrl}${path}`, {
-    credentials: 'include',
-    ...options,
-    headers,
-  })
+  try {
+    const response = await fetch(`${backendUrl}${path}`, {
+      credentials: 'include',
+      ...options,
+      headers,
+    })
 
-  const data = await response.json()
-  if (!response.ok) {
-    throw new Error(data.error || 'Backend request failed')
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data.error || 'Backend request failed')
+    }
+
+    return data
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Cannot connect to backend server. Please make sure the backend is running on ' + backendUrl)
+    }
+    throw error
   }
-
-  return data
 }

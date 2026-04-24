@@ -17,6 +17,7 @@ import {
   Stethoscope
 } from "lucide-react"
 import { backendRequest } from "@/lib/backend"
+import { fetchOSMVets, OSMVet } from "@/lib/osmVets"
 
 interface Vet {
   _id: string
@@ -37,6 +38,7 @@ export function VetFinder() {
   const [isGettingLocation, setIsGettingLocation] = useState(false)
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [vets, setVets] = useState<Vet[]>([])
+  const [osmVets, setOsmVets] = useState<OSMVet[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -60,16 +62,25 @@ export function VetFinder() {
       alert("Geolocation is not supported by your browser")
       return
     }
-
     setIsGettingLocation(true)
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocation({
+      async (position) => {
+        const coords = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        })
-        setIsGettingLocation(false)
-        // In production, you'd fetch real vets based on location
+        }
+        setLocation(coords)
+        try {
+          setIsLoading(true)
+          // Only call OSM API when user clicks Near Me
+          const osmResults = await fetchOSMVets(coords.lat, coords.lng, 50000)
+          setOsmVets(osmResults)
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Unable to load OSM vets")
+        } finally {
+          setIsGettingLocation(false)
+          setIsLoading(false)
+        }
       },
       () => {
         alert("Unable to retrieve your location")
@@ -156,9 +167,45 @@ export function VetFinder() {
         <div className="flex items-center justify-center py-12">
           <Spinner className="h-8 w-8" />
         </div>
+      ) : osmVets.length > 0 ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {osmVets.map((vet) => (
+            <Card key={vet.id} className="overflow-hidden border-border/50 transition-all hover:shadow-lg">
+              <div className="flex flex-col sm:flex-row">
+                <div className="aspect-video w-full sm:aspect-square sm:w-48 bg-gray-100 flex items-center justify-center">
+                  <Stethoscope className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <CardContent className="flex flex-1 flex-col p-4">
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-semibold">{vet.name}</h3>
+                    </div>
+                  </div>
+                  <div className="mb-3 space-y-1 text-sm text-muted-foreground">
+                    <p className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 shrink-0" />
+                      <span>{vet.address}</span>
+                    </p>
+                  </div>
+                  <div className="mt-auto flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 gap-1"
+                      onClick={() => openInMaps(`${vet.lat},${vet.lon}`)}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Directions
+                    </Button>
+                  </div>
+                </CardContent>
+              </div>
+            </Card>
+          ))}
+        </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
           {vets.map((vet) => (
+            // ...existing code for local vets...
             <Card key={vet._id} className="overflow-hidden border-border/50 transition-all hover:shadow-lg">
               <div className="flex flex-col sm:flex-row">
                 <div className="aspect-video w-full sm:aspect-square sm:w-48">
@@ -182,7 +229,6 @@ export function VetFinder() {
                       {vet.isOpen ? "Open" : "Closed"}
                     </Badge>
                   </div>
-
                   <div className="mb-3 space-y-1 text-sm text-muted-foreground">
                     <p className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 shrink-0" />
@@ -197,7 +243,6 @@ export function VetFinder() {
                       <span>{vet.distance} away</span>
                     </p>
                   </div>
-
                   <div className="mb-4 flex flex-wrap gap-1">
                     {vet.services.slice(0, 3).map((service) => (
                       <Badge key={service} variant="outline" className="text-xs">
@@ -210,7 +255,6 @@ export function VetFinder() {
                       </Badge>
                     )}
                   </div>
-
                   <div className="mt-auto flex gap-2">
                     <Button size="sm" variant="outline" className="flex-1 gap-1" asChild>
                       <a href={`tel:${vet.phone.replace(/[^0-9]/g, "")}`}>

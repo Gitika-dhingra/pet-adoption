@@ -28,9 +28,11 @@ export default function LoginPage() {
         method: "POST",
         body: JSON.stringify({ email, password }),
       })
-
       setAuthToken(token)
-      router.push("/dashboard")
+      const me = await backendRequest("/api/auth/me")
+      const role = me?.user?.role ?? me?.role
+      const redirectPath = role === 'admin' ? '/admin' : role === 'vet' ? '/vet' : '/dashboard'
+      router.push(redirectPath)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to sign in")
     } finally {
@@ -118,3 +120,4 @@ export default function LoginPage() {
     </div>
   )
 }
+
